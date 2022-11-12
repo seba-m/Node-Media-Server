@@ -5,6 +5,8 @@
 //
 const Logger = require('./node_core_logger');
 
+const ffmpeg = require('@ffmpeg-installer/ffmpeg');
+
 const NodeFissionSession = require('./node_fission_session');
 const context = require('./node_core_ctx');
 const { getFFmpegVersion, getFFmpegUrl } = require('./node_core_utils');
@@ -28,13 +30,16 @@ class NodeFissionServer {
     }
 
     try {
-      fs.accessSync(this.config.fission.ffmpeg, fs.constants.X_OK);
+      fs.accessSync(ffmpeg.path, fs.constants.X_OK);
+      //fs.accessSync(this.config.fission.ffmpeg, fs.constants.X_OK);
     } catch (error) {
-      Logger.error(`Node Media Fission Server startup failed. ffmpeg:${this.config.fission.ffmpeg} cannot be executed.`);
+      Logger.error(`Node Media Fission Server startup failed. ffmpeg:${ffmpeg.path} cannot be executed.`);
+      //Logger.error(`Node Media Fission Server startup failed. ffmpeg:${this.config.fission.ffmpeg} cannot be executed.`);
       return;
     }
 
-    let version = await getFFmpegVersion(this.config.fission.ffmpeg);
+    let version = await getFFmpegVersion(ffmpeg.path);
+    //let version = await getFFmpegVersion(this.config.fission.ffmpeg);
     if (version === '' || parseInt(version.split('.')[0]) < 4) {
       Logger.error('Node Media Fission Server startup failed. ffmpeg requires version 4.0.0 above');
       Logger.error('Download the latest ffmpeg static program:', getFFmpegUrl());
@@ -58,7 +63,8 @@ class NodeFissionServer {
           continue;
         }
         let conf = task;
-        conf.ffmpeg = this.config.fission.ffmpeg;
+        conf.ffmpeg = ffmpeg.path;
+        //conf.ffmpeg = this.config.fission.ffmpeg;
         conf.mediaroot = this.config.http.mediaroot;
         conf.rtmpPort = this.config.rtmp.port;
         conf.streamPath = streamPath;

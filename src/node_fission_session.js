@@ -5,6 +5,8 @@
 //
 const Logger = require('./node_core_logger');
 
+const ffmpeg = require('@ffmpeg-installer/ffmpeg');
+
 const EventEmitter = require('events');
 const { spawn } = require('child_process');
 
@@ -27,7 +29,8 @@ class NodeFissionSession extends EventEmitter {
     }
 
     argv = argv.filter((n) => { return n; });
-    this.ffmpeg_exec = spawn(this.conf.ffmpeg, argv);
+    this.ffmpeg_exec = spawn(ffmpeg.path, argv);
+    //this.ffmpeg_exec = spawn(this.conf.ffmpeg, argv);
     this.ffmpeg_exec.on('error', (e) => {
       Logger.ffdebug(e);
     });

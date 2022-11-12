@@ -6,6 +6,8 @@
 const Logger = require('./node_core_logger');
 const NodeCoreUtils = require('./node_core_utils');
 
+const ffmpeg = require('@ffmpeg-installer/ffmpeg');
+
 const EventEmitter = require('events');
 const { spawn } = require('child_process');
 
@@ -37,7 +39,8 @@ class NodeRelaySession extends EventEmitter {
 
     Logger.log('[relay task] id=' + this.id, 'cmd=ffmpeg', argv.join(' '));
 
-    this.ffmpeg_exec = spawn(this.conf.ffmpeg, argv);
+    this.ffmpeg_exec = spawn(ffmpeg.path, argv);
+    //this.ffmpeg_exec = spawn(this.conf.ffmpeg, argv);
     this.ffmpeg_exec.on('error', (e) => {
       Logger.ffdebug(e);
     });

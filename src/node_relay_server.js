@@ -5,6 +5,8 @@
 //
 const Logger = require('./node_core_logger');
 
+const ffmpeg = require('@ffmpeg-installer/ffmpeg');
+
 const NodeCoreUtils = require('./node_core_utils');
 const NodeRelaySession = require('./node_relay_session');
 const context = require('./node_core_ctx');
@@ -23,13 +25,16 @@ class NodeRelayServer {
 
   async run() {
     try {
-      fs.accessSync(this.config.relay.ffmpeg, fs.constants.X_OK);
+      fs.accessSync(ffmpeg.path, fs.constants.X_OK);
+      //fs.accessSync(this.config.relay.ffmpeg, fs.constants.X_OK);
     } catch (error) {
-      Logger.error(`Node Media Relay Server startup failed. ffmpeg:${this.config.relay.ffmpeg} cannot be executed.`);
+      Logger.error(`Node Media Relay Server startup failed. ffmpeg:${ffmpeg.path} cannot be executed.`);
+      //Logger.error(`Node Media Relay Server startup failed. ffmpeg:${this.config.relay.ffmpeg} cannot be executed.`);
       return;
     }
 
-    let version = await getFFmpegVersion(this.config.relay.ffmpeg);
+    let version = await getFFmpegVersion(ffmpeg.path);
+    //let version = await getFFmpegVersion(this.config.relay.ffmpeg);
     if (version === '' || parseInt(version.split('.')[0]) < 4) {
       Logger.error('Node Media Relay Server startup failed. ffmpeg requires version 4.0.0 above');
       Logger.error('Download the latest ffmpeg static program:', getFFmpegUrl());
@@ -60,7 +65,8 @@ class NodeRelayServer {
       let isStatic = conf.mode === 'static';
       if (isStatic) {
         conf.name = conf.name ? conf.name : NodeCoreUtils.genRandomName();
-        conf.ffmpeg = this.config.relay.ffmpeg;
+        conf.ffmpeg = ffmpeg.path;
+        //conf.ffmpeg = this.config.relay.ffmpeg;
         conf.inPath = conf.edge;
         conf.ouPath = `rtmp://127.0.0.1:${this.config.rtmp.port}/${conf.app}/${conf.name}`;
         let session = new NodeRelaySession(conf);
@@ -79,7 +85,8 @@ class NodeRelayServer {
 
   onRelayTask(path, url) {
     let conf = {};
-    conf.ffmpeg = this.config.relay.ffmpeg;
+    conf.ffmpeg = ffmpeg.path;
+    //conf.ffmpeg = this.config.relay.ffmpeg;
     conf.app = '-';
     conf.name = '-';
     conf.inPath = path;
@@ -103,7 +110,8 @@ class NodeRelayServer {
     conf.app = app;
     conf.name = name;
     conf.mode = 'pull';
-    conf.ffmpeg = this.config.relay.ffmpeg;
+    conf.ffmpeg = ffmpeg.path;
+    //conf.ffmpeg = this.config.relay.ffmpeg;
     conf.inPath = url;
     if (rtsp_transport){
       conf.rtsp_transport = rtsp_transport
@@ -129,7 +137,8 @@ class NodeRelayServer {
     conf.app = app;
     conf.name = name;
     conf.mode = 'push';
-    conf.ffmpeg = this.config.relay.ffmpeg;
+    conf.ffmpeg = ffmpeg.path;
+    //conf.ffmpeg = this.config.relay.ffmpeg;
     conf.inPath = `rtmp://127.0.0.1:${this.config.rtmp.port}/${app}/${name}`;
     conf.ouPath = url;
     let session = new NodeRelaySession(conf);
@@ -157,7 +166,8 @@ class NodeRelayServer {
       let isPull = conf.mode === 'pull';
       if (isPull && app === conf.app && !context.publishers.has(streamPath)) {
         let hasApp = conf.edge.match(/rtmp:\/\/([^\/]+)\/([^\/]+)/);
-        conf.ffmpeg = this.config.relay.ffmpeg;
+        conf.ffmpeg = ffmpeg.path;
+        //conf.ffmpeg = this.config.relay.ffmpeg;
         conf.inPath = hasApp ? `${conf.edge}/${stream}` : `${conf.edge}${streamPath}`;
         conf.ouPath = `rtmp://127.0.0.1:${this.config.rtmp.port}${streamPath}`;
         if (Object.keys(args).length > 0) {
@@ -196,7 +206,8 @@ class NodeRelayServer {
       let isPush = conf.mode === 'push';
       if (isPush && app === conf.app) {
         let hasApp = conf.edge.match(/rtmp:\/\/([^\/]+)\/([^\/]+)/);
-        conf.ffmpeg = this.config.relay.ffmpeg;
+        conf.ffmpeg = ffmpeg.path;
+        //conf.ffmpeg = this.config.relay.ffmpeg;
         conf.inPath = `rtmp://127.0.0.1:${this.config.rtmp.port}${streamPath}`;
         conf.ouPath = conf.appendName === false ? conf.edge : (hasApp ? `${conf.edge}/${stream}` : `${conf.edge}${streamPath}`);
         if (Object.keys(args).length > 0) {
