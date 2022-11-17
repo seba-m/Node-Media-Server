@@ -78,9 +78,25 @@ class NodeHttpServer {
      * ~ openssl x509 -req -in certrequest.csr -signkey privatekey.pem -out certificate.pem
      */
     if (this.config.https) {
+
+      let keys;
+      let certs;
+
+      if (Array.isArray(this.config.https.key)) {
+        keys = this.config.https.key.map((key) => Fs.readFileSync(key));
+      } else {
+        keys = Fs.readFileSync(this.config.https.key);
+      }
+
+      if (Array.isArray(this.config.https.cert)) {
+        certs = this.config.https.cert.map((cert) => Fs.readFileSync(cert));
+      } else {
+        certs = Fs.readFileSync(this.config.https.cert);
+      }
+
       let options = {
-        key: Fs.readFileSync(this.config.https.key),
-        cert: Fs.readFileSync(this.config.https.cert)
+        key: keys,
+        cert: certs
       };
       this.sport = config.https.port ? config.https.port : HTTPS_PORT;
       this.httpsServer = Https.createServer(options, app);
