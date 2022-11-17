@@ -78,25 +78,24 @@ class NodeHttpServer {
      * ~ openssl x509 -req -in certrequest.csr -signkey privatekey.pem -out certificate.pem
      */
     if (this.config.https) {
+      const getFiles = (files) => {
+        let isArray = Array.isArray(files);
+        let isEncoded = isArray ? files[0].includes('-----BEGIN') : files.includes('-----BEGIN');
 
-      let keys;
-      let certs;
-
-      if (Array.isArray(this.config.https.key)) {
-        keys = this.config.https.key.map((key) => Fs.readFileSync(key));
-      } else {
-        keys = Fs.readFileSync(this.config.https.key);
-      }
-
-      if (Array.isArray(this.config.https.cert)) {
-        certs = this.config.https.cert.map((cert) => Fs.readFileSync(cert));
-      } else {
-        certs = Fs.readFileSync(this.config.https.cert);
+        if (isArray) {
+          return isEncoded ? 
+            this.config.https.files.map(file => Fs.readFileSync(file, 'utf8')) : 
+            this.config.https.files.map(file => Fs.readFileSync(file));
+        } else {
+          return isEncoded ? 
+            Fs.readFileSync(files, 'utf8') : 
+            Fs.readFileSync(files);
+        }
       }
 
       let options = {
-        key: keys,
-        cert: certs
+        key: getFiles(this.config.https.key),
+        cert: getFiles(this.config.https.cert)
       };
       this.sport = config.https.port ? config.https.port : HTTPS_PORT;
       this.httpsServer = Https.createServer(options, app);
