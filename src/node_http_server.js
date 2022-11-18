@@ -30,8 +30,8 @@ class NodeHttpServer {
     this.mediaroot = config.http.mediaroot || HTTP_MEDIAROOT;
     this.config = config;
 
-    let isEnabledHttps = this.config.https && this.config.https.enabled;
-    let isEnabledHttp = (this.config.http && this.config.http.enabled) || !isEnabledHttps;
+    this.isEnabledHttps = this.config.https && this.config.https.enabled;
+    this.isEnabledHttp = (this.config.http && this.config.http.enabled) || !isEnabledHttps;
 
     let app = Express();
     app.use(bodyParser.json());
@@ -75,7 +75,7 @@ class NodeHttpServer {
       app.use(Express.static(config.http.webroot));
     }
 
-    if (isEnabledHttp) {
+    if (this.isEnabledHttp) {
       this.httpServer = Http.createServer(app);
     }
 
@@ -84,7 +84,7 @@ class NodeHttpServer {
      * ~ openssl req -new -key privatekey.pem -out certrequest.csr
      * ~ openssl x509 -req -in certrequest.csr -signkey privatekey.pem -out certificate.pem
      */
-    if (isEnabledHttps) {
+    if (this.isEnabledHttps) {
       const getFiles = (files) => {
         let isArray = Array.isArray(files);
         let isEncoded = isArray ? files[0].includes('-----BEGIN') : files.includes('-----BEGIN');
@@ -110,33 +110,35 @@ class NodeHttpServer {
   }
 
   run() {
-    this.httpServer.listen(this.port, () => {
-      Logger.log(`Node Media Http Server started on port: ${this.port}`);
-    });
+    if (this.isEnabledHttp) {
+      this.httpServer.listen(this.port, () => {
+        Logger.log(`Node Media Http Server started on port: ${this.port}`);
+      });
 
-    this.httpServer.on('error', (e) => {
-      Logger.error(`Node Media Http Server ${e}`);
-    });
+      this.httpServer.on('error', (e) => {
+        Logger.error(`Node Media Http Server ${e}`);
+      });
 
-    this.httpServer.on('close', () => {
-      Logger.log('Node Media Http Server Close.');
-    });
+      this.httpServer.on('close', () => {
+        Logger.log('Node Media Http Server Close.');
+      });
 
-    this.wsServer = new WebSocket.Server({ server: this.httpServer });
+      this.wsServer = new WebSocket.Server({ server: this.httpServer });
 
-    this.wsServer.on('connection', (ws, req) => {
-      req.nmsConnectionType = 'ws';
-      this.onConnect(req, ws);
-    });
+      this.wsServer.on('connection', (ws, req) => {
+        req.nmsConnectionType = 'ws';
+        this.onConnect(req, ws);
+      });
 
-    this.wsServer.on('listening', () => {
-      Logger.log(`Node Media WebSocket Server started on port: ${this.port}`);
-    });
-    this.wsServer.on('error', (e) => {
-      Logger.error(`Node Media WebSocket Server ${e}`);
-    });
+      this.wsServer.on('listening', () => {
+        Logger.log(`Node Media WebSocket Server started on port: ${this.port}`);
+      });
+      this.wsServer.on('error', (e) => {
+        Logger.error(`Node Media WebSocket Server ${e}`);
+      });
+    }
 
-    if (this.httpsServer) {
+    if (this.isEnabledHttps) {
       this.httpsServer.listen(this.sport, () => {
         Logger.log(`Node Media Https Server started on port: ${this.sport}`);
       });
@@ -181,8 +183,11 @@ class NodeHttpServer {
   }
 
   stop() {
-    this.httpServer.close();
-    if (this.httpsServer) {
+    if (this.isEnabledHttp) {
+      this.httpServer.close();
+    }
+    
+    if (this.isEnabledHttps) {
       this.httpsServer.close();
     }
     context.sessions.forEach((session, id) => {
