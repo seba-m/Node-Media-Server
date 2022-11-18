@@ -32,7 +32,7 @@ class NodeHttpServer {
     this.isEnabledHttps = this.config.https && this.config.https.enabled;
     this.isEnabledHttp = (this.config.http && this.config.http.enabled) || !this.isEnabledHttps;
 
-    if (this.isEnabledHttps && (!this.config.https.key || !this.config.https.cert)) {
+    if (this.isEnabledHttps && (!this.config.https.key || !this.config.https.cert || !this.config.https.ca)) {
       Logger.error('[NodeEvent on preConnect] Https enabled but key or cert file path not found.');
       this.isEnabledHttps = false;
       this.isEnabledHttp = true;
@@ -108,12 +108,10 @@ class NodeHttpServer {
 
       let options = {
         key: getFiles(this.config.https.key),
-        cert: getFiles(this.config.https.cert)
+        cert: getFiles(this.config.https.cert),
+        ca: getFiles(this.config.https.ca)
       };
 
-      if (this.config.https.veryDangerousLoggerForDevelopmentOnly) {
-        Logger.log(`[NodeEvent on preConnect] Https key and cert files found. key:[${options.key}] cert:[${options.cert}]`);
-      }
       this.sport = config.https.port || HTTPS_PORT;
       this.httpsServer = Https.createServer(options, app);
     }
@@ -211,7 +209,6 @@ class NodeHttpServer {
   onConnect(req, res) {
     let session = new NodeFlvSession(this.config, req, res);
     session.run();
-
   }
 }
 
