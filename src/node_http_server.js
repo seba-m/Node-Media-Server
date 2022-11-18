@@ -30,6 +30,9 @@ class NodeHttpServer {
     this.mediaroot = config.http.mediaroot || HTTP_MEDIAROOT;
     this.config = config;
 
+    let isEnabledHttps = this.config.https && this.config.https.enabled;
+    let isEnabledHttp = (this.config.http && this.config.http.enabled) || !isEnabledHttps;
+
     let app = Express();
     app.use(bodyParser.json());
 
@@ -72,14 +75,16 @@ class NodeHttpServer {
       app.use(Express.static(config.http.webroot));
     }
 
-    this.httpServer = Http.createServer(app);
+    if (isEnabledHttp) {
+      this.httpServer = Http.createServer(app);
+    }
 
     /**
      * ~ openssl genrsa -out privatekey.pem 1024
      * ~ openssl req -new -key privatekey.pem -out certrequest.csr
      * ~ openssl x509 -req -in certrequest.csr -signkey privatekey.pem -out certificate.pem
      */
-    if (this.config.https) {
+    if (isEnabledHttps) {
       const getFiles = (files) => {
         let isArray = Array.isArray(files);
         let isEncoded = isArray ? files[0].includes('-----BEGIN') : files.includes('-----BEGIN');
@@ -101,7 +106,6 @@ class NodeHttpServer {
       };
       this.sport = config.https.port ? config.https.port : HTTPS_PORT;
       this.httpsServer = Https.createServer(options, app);
-      Logger.log('HTTPS Server listening on port: ' + this.sport);
     }
   }
 
