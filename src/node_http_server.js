@@ -26,12 +26,18 @@ const relayRoute = require('./api/routes/relay');
 
 class NodeHttpServer {
   constructor(config) {
-    this.port = config.http.port || HTTP_PORT;
     this.mediaroot = config.http.mediaroot || HTTP_MEDIAROOT;
     this.config = config;
 
     this.isEnabledHttps = this.config.https && this.config.https.enabled;
     this.isEnabledHttp = (this.config.http && this.config.http.enabled) || !this.isEnabledHttps;
+
+    if (this.isEnabledHttps && (!this.config.https.key || !this.config.https.cert)) {
+      Logger.error('[NodeEvent on preConnect] Https enabled but key or cert file path not found.');
+      this.isEnabledHttps = false;
+      this.isEnabledHttp = true;
+    }
+
 
     let app = Express();
     app.use(bodyParser.json());
@@ -76,6 +82,7 @@ class NodeHttpServer {
     }
 
     if (this.isEnabledHttp) {
+      this.port = config.http.port || HTTP_PORT;
       this.httpServer = Http.createServer(app);
     }
 
@@ -89,22 +96,25 @@ class NodeHttpServer {
         let isArray = Array.isArray(files);
         let isEncoded = isArray ? files[0].includes('-----BEGIN') : files.includes('-----BEGIN');
 
-        if (isArray) {
+        if (isArray)
           return isEncoded ? 
             files.map(file => Fs.readFileSync(file, 'utf8')) : 
             files.map(file => Fs.readFileSync(file));
-        } else {
-          return isEncoded ? 
-            Fs.readFileSync(files, 'utf8') : 
-            Fs.readFileSync(files);
-        }
+
+        return isEncoded ? 
+          Fs.readFileSync(files, 'utf8') : 
+          Fs.readFileSync(files);
       }
 
       let options = {
         key: getFiles(this.config.https.key),
         cert: getFiles(this.config.https.cert)
       };
-      this.sport = config.https.port ? config.https.port : HTTPS_PORT;
+
+      if (this.config.https.veryDangerousLoggerForDevelopmentOnly) {
+        Logger.log(`[NodeEvent on preConnect] Https key and cert files found. key:[${options.key}] cert:[${options.cert}]`);
+      }
+      this.sport = config.https.port || HTTPS_PORT;
       this.httpsServer = Https.createServer(options, app);
     }
   }
