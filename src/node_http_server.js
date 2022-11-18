@@ -48,11 +48,13 @@ class NodeHttpServer {
       this.onConnect(req, res);
     });
 
-    let adminEntry = path.join(__dirname + '/public/admin/index.html');
-    if (Fs.existsSync(adminEntry)) {
-      app.get('/admin/*', (req, res) => {
-        res.sendFile(adminEntry);
-      });
+    if (this.config.http.admin !== false) {
+      let adminEntry = path.join(__dirname + '/public/admin/index.html');
+      if (Fs.existsSync(adminEntry)) {
+        app.get('/admin/*', (req, res) => {
+          res.sendFile(adminEntry);
+        });
+      }
     }
 
     if (this.config.http.api !== false) {
@@ -84,8 +86,8 @@ class NodeHttpServer {
 
         if (isArray) {
           return isEncoded ? 
-            this.config.https.files.map(file => Fs.readFileSync(file, 'utf8')) : 
-            this.config.https.files.map(file => Fs.readFileSync(file));
+            files.map(file => Fs.readFileSync(file, 'utf8')) : 
+            files.map(file => Fs.readFileSync(file));
         } else {
           return isEncoded ? 
             Fs.readFileSync(files, 'utf8') : 
@@ -99,6 +101,7 @@ class NodeHttpServer {
       };
       this.sport = config.https.port ? config.https.port : HTTPS_PORT;
       this.httpsServer = Https.createServer(options, app);
+      Logger.log('HTTPS Server listening on port: ' + this.sport);
     }
   }
 
