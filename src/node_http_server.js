@@ -31,7 +31,7 @@ class NodeHttpServer {
     this.config = config;
 
     this.isEnabledHttps = this.config.https && this.config.https.enabled;
-    this.isEnabledHttp = (this.config.http && this.config.http.enabled) || !isEnabledHttps;
+    this.isEnabledHttp = (this.config.http && this.config.http.enabled) || !this.isEnabledHttps;
 
     let app = Express();
     app.use(bodyParser.json());
@@ -186,7 +186,7 @@ class NodeHttpServer {
     if (this.isEnabledHttp) {
       this.httpServer.close();
     }
-    
+
     if (this.isEnabledHttps) {
       this.httpsServer.close();
     }
